@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Магазин «Свежак»</title>
+  <style>
+    :root {
+      --bg-color: #f4f7f6;
+      --card-bg: #ffffff;
+      --text-color: #222222;
+      --muted-text: #777777;
+      --border-color: #dddddd;
+      --accent: #2e7d32;
+      --accent-hover: #1b5e20;
+      --card-top: #4caf50;
+      --shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #f0f0f0;
+      --muted-text: #aaaaaa;
+      --border-color: #333333;
+      --accent: #4caf50;
+      --accent-hover: #388e3c;
+      --card-top: #66bb6a;
+      --shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.25s, color 0.25s;
+    }
+
+    /* Экран пароля */
+    #login-screen {
+      max-width: 340px;
+      margin: 80px auto;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    #login-screen h2 { margin-top: 0; color: var(--accent); }
+    
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid var(--border-color);
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover { background-color: var(--accent-hover); }
+    .error { color: #ef5350; font-size: 14px; margin-top: 8px; display: none; }
+
+    /* Основной экран */
+    #app-screen { display: none; max-width: 900px; margin: 0 auto; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .header h1 { margin: 0; color: var(--accent); font-size: 26px; }
+    
+    .controls { display: flex; gap: 8px; align-items: center; }
+    .theme-select {
+      width: auto;
+      margin: 0;
+      padding: 9px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-add-toggle { width: auto; padding: 10px 16px; margin: 0; font-size: 15px; }
+
+    /* Форма добавления */
+    #add-form {
+      display: none;
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .form-row input { flex: 1; min-width: 150px; }
+
+    /* Сетка квадратиков */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 15px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      aspect-ratio: 1 / 1;
+      position: relative;
+      border-top: 4px solid var(--card-top);
+    }
+    .card-title { font-size: 18px; font-weight: 600; word-break: break-word; padding-right: 22px; }
+    .card-price { font-size: 22px; font-weight: bold; color: var(--accent); margin-top: auto; }
+    .card-qty { font-size: 13px; color: var(--muted-text); margin-top: 4px; }
+    .delete-btn {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: none;
+      color: var(--muted-text);
+      width: auto;
+      padding: 2px 6px;
+      margin: 0;
+      font-size: 16px;
+    }
+    .delete-btn:hover { background: none; color: #ef5350; }
+  </style>
+</head>
+<body>
+
+  <!-- Экран пароля -->
+  <div id="login-screen">
+    <h2>Магазин «Свежак»</h2>
+    <p style="color:var(--muted-text); font-size:14px;">Введите пароль для входа</p>
+    <input type="password" id="pass-input" placeholder="Пароль" onkeyup="if(event.key==='Enter') checkPass()">
+    <button onclick="checkPass()">Войти</button>
+    <div id="pass-error" class="error">Неверный пароль</div>
+  </div>
+
+  <!-- Основной сайт -->
+  <div id="app-screen">
+    <div class="header">
+      <h1>🍏 Свежак</h1>
+      <div class="controls">
+        <select id="theme-select" class="theme-select" onchange="changeTheme(this.value)">
+          <option value="auto">🌓 Авто</option>
+          <option value="light">☀️ Белая</option>
+          <option value="dark">🌙 Чёрная</option>
+        </select>
+        <button class="btn-add-toggle" onclick="toggleForm()">+ Добавить</button>
+      </div>
+    </div>
+
+    <div id="add-form">
+      <div class="form-row">
+        <input type="text" id="p-name" placeholder="Название продукта">
+        <input type="number" inputmode="decimal" id="p-price" placeholder="Цена (только цифры)">
+        <input type="number" inputmode="numeric" id="p-qty" placeholder="За сколько штук (необязательно)">
+      </div>
+      <button onclick="saveProduct()">Сохранить</button>
+    </div>
+
+    <div class="grid" id="products-grid"></div>
+  </div>
+
+  <script>
+    let products = JSON.parse(localStorage.getItem('svezhak_products')) || [];
+
+    // Управление темой
+    function applyTheme(mode) {
+      if (mode === 'dark') {
+        document.body.classList.add('dark');
+      } else if (mode === 'light') {
+        document.body.classList.remove('dark');
+      } else {
+        // Авто: с 19:00 до 07:00 — тёмная, днём — белая
+        const hour = new Date().getHours();
+        if (hour >= 19 || hour < 7) {
+          document.body.classList.add('dark');
+        } else {
+          document.body.classList.remove('dark');
+        }
+      }
+    }
+
+    function changeTheme(mode) {
+      localStorage.setItem('svezhak_theme', mode);
+      applyTheme(mode);
+    }
+
+    // Применяем тему сразу при загрузке
+    const savedTheme = localStorage.getItem('svezhak_theme') || 'auto';
+    document.getElementById('theme-select').value = savedTheme;
+    applyTheme(savedTheme);
+
+    function checkPass() {
+      const val = document.getElementById('pass-input').value.trim().toLowerCase();
+      if (val === 'свежак') {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'block';
+        renderProducts();
+      } else {
+        document.getElementById('pass-error').style.display = 'block';
+      }
+    }
+
+    function toggleForm() {
+      const form = document.getElementById('add-form');
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveProduct() {
+      const name = document.getElementById('p-name').value.trim();
+      const price = document.getElementById('p-price').value.trim();
+      const qty = document.getElementById('p-qty').value.trim();
+
+      if (!name || !price) {
+        alert('Введите название и цену!');
+        return;
+      }
+
+      products.push({ name, price, qty });
+      localStorage.setItem('svezhak_products', JSON.stringify(products));
+
+      document.getElementById('p-name').value = '';
+      document.getElementById('p-price').value = '';
+      document.getElementById('p-qty').value = '';
+      document.getElementById('add-form').style.display = 'none';
+
+      renderProducts();
+    }
+
+    function removeProduct(index) {
+      if (confirm('Удалить этот продукт?')) {
+        products.splice(index, 1);
+        localStorage.setItem('svezhak_products', JSON.stringify(products));
+        renderProducts();
+      }
+    }
+
+    function renderProducts() {
+      const grid = document.getElementById('products-grid');
+      grid.innerHTML = '';
+
+      products.forEach((p, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        
+        // Очищаем от лишних букв на случай старых записей и подставляем ₽ и шт.
+        const cleanPrice = String(p.price).replace(/[^\d.,]/g, '');
+        const cleanQty = p.qty ? String(p.qty).replace(/[^\d.,]/g, '') : '';
+        
+        const qtyHtml = cleanQty ? `<div class="card-qty">за ${cleanQty} шт.</div>` : '';
+
+        card.innerHTML = `
+          <button class="delete-btn" onclick="removeProduct(${index})" title="Удалить">✕</button>
+          <div class="card-title">${p.name}</div>
+          <div>
+            <div class="card-price">${cleanPrice} ₽</div>
+            ${qtyHtml}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
